@@ -1,34 +1,67 @@
 <?php
-    if($_POST) {
-        print_r($_POST);
-        print_r($_FILES);
+require_once ("connection.php");
+const EXCEPTED_EXTENSION_TYPE = ["jpg", "jpeg", "png", "gif", "svg", "pdf"];
+const EXCEPTED_MIME_TYPE = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "application/pdf"];
+const EXCEPTED_SIZE = 5;
+
+if($_POST) {
+    $error_messages = [];
+
+    if(!empty($_FILES['photos']['name'])) {
+        for($i=0; $i<count($_FILES['photos']['name']); $i++) {
+
+            $imageFileExtension = strtolower(pathinfo($_FILES['photos']['name'][$i],PATHINFO_EXTENSION));
+            if(!in_array($imageFileExtension, EXCEPTED_EXTENSION_TYPE)) {
+                $error_messages[] = 'The file "'.$_FILES['photos']['name'][$i].'" does not match with the accepted file extensions: ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"';
+            }
+
+            $mime_type = mime_content_type($_FILES["photos"]["tmp_name"][$i]);
+            if(!in_array($mime_type, EXCEPTED_MIME_TYPE)) {
+                $error_messages[] = 'The file "'.$_FILES['photos']['name'][$i].'" is a fake file. Accepted files: ".jpg", ".jpeg", ".png", ".gif", ".svg", ".pdf"';
+            }
+
+            $fileSize = filesize($_FILES["photos"]["tmp_name"][$i]);
+            if($fileSize > EXCEPTED_SIZE * 1024 * 1024) {
+                $error_messages[] = 'The file "'.$_FILES['photos']['name'][$i].'" exceeds the maximum size of '.EXCEPTED_SIZE.'Mb';
+            }
+        }
+        $data = [];
+        if(!empty($error_messages)) {
+            $data['message'] = 'invalid';
+            $data['errors'] = $error_messages;
+        }
+        else {
+            for($i=0; $i<count($_FILES['photos']['name']); $i++) {
+                $mime_type = mime_content_type($_FILES["photos"]["tmp_name"][$i]);
+                $target_dir = ($mime_type ==='application/pdf')?"uploads/pdf/":"uploads/images/";
+
+                $filename = uniqid().'_'. basename($_FILES["photos"]["name"][$i]);
+
+                $target_file = $target_dir . $filename;
+                move_uploaded_file($_FILES["photos"]["tmp_name"][$i], $target_file);
+
+                /* @var $conn */
+                $stmt = $conn->prepare("INSERT INTO files (file, mime_type, comment) VALUES (?, ?, ?)");
+                $stmt->bind_param("sss", $file, $mime, $comment);
+
+                $file = $filename;
+                $mime = $mime_type;
+                $comment = $_POST['comment_'.$i];
+                $stmt->execute();
+            }
+            $data['message'] = 'Files uploaded successfully';
+        }
+        echo json_encode($data);
     }
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="content-language" content="en"/>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta name="description"
-          content="Image-Uploader is a simple jQuery Drag & Drop Image Uploader plugin made to be used in forms, without AJAX."/>
-    <meta name="keywords" content="image, upload, uploader, image-uploader, jquery, gallery, file, form, static"/>
-    <meta name="author" content="Christian Bayer"/>
-    <meta name="copyright" content="© 2019 - Christian Bayer"/>
-    <meta property="og:url" content="https://christianbayer.github.io/image-uploader/"/>
-    <meta property="og:type" content="website"/>
-    <meta property="og:title" content="Image-Uploader"/>
-    <meta property="og:description"
-          content="Image-Uploader is a simple jQuery Drag & Drop Image Uploader plugin made to be used in forms, without AJAX."/>
-    <meta property="og:image" content="https://github.githubassets.com/images/modules/logos_page/GitHub-Logo.png"/>
-
-    <title>Image-Uploader</title>
+    <title>Image PDF Uploader</title>
 
     <link rel="stylesheet" href="dist/image-uploader.min.css?v=<?php echo time() ?>">
-    <link href="https://fonts.googleapis.com/css?family=Lato:300,700|Montserrat:300,400,500,600,700|Source+Code+Pro&display=swap"
-          rel="stylesheet">
 
     <style>
         * {
@@ -221,6 +254,15 @@
             position: relative;
         }
 
+        .err {
+            color: #ff0000;
+        }
+
+        .preview {
+            color: #2d562d;
+            font-weight: bold;
+        }
+
         @media screen and (max-width: 1366px) {
             body {
                 font-size: 15px;
@@ -268,14 +310,18 @@
 
 <main>
     <div class="container">
-        <form method="POST" name="form-example-2" id="form-example-2" enctype="multipart/form-data" action="">
+        <div id="err" class="err" style="display: none">
+        </div>
+        <div id="preview" class="preview" style="display: none">
+        </div>
+        <form method="POST" name="form-example-2" id="form-example-2" enctype="multipart/form-data">
 
             <div class="input-field">
                 <label class="active">Photos</label>
-                <div class="input-images-2" style="padding-top: .5rem;"></div>
+                <div class="input-images-files" style="padding-top: .5rem;"></div>
             </div>
 
-            <button>Submit and display data</button>
+            <button type="submit">Submit</button>
         </form>
     </div>
 </main>
@@ -283,37 +329,24 @@
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"
         integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="dist/image-uploader.min.js"></script>
+<script type="text/javascript" src="dist/image-uploader.min.js?v=<?php echo time() ?>"></script>
 
 <script>
     $(function () {
 
-        $('.input-images-2').imageUploader({
+        $('.input-images-files').imageUploader({
             imagesInputName: 'photos',
             preloadedInputName: 'old',
-            maxSize: 2 * 1024 * 1024,
-            maxFiles: 10
+            maxSize: <?php echo EXCEPTED_SIZE ?> * 1024 * 1024
         });
 
-        $('form').on('submit', function (event) {
-
-            // Stop propagation
-            /*event.preventDefault();
-            event.stopPropagation();*/
+        $('form#form-example-2').on('submit', function (event) {
+            event.preventDefault();
 
             // Get some vars
-            let $form = $(this),
-                $modal = $('.modal');
-
-            // Set name and description
-            //$modal.find('#display-name span').text($form.find('input[id^="name"]').val());
-            //$modal.find('#display-description span').text($form.find('input[id^="description"]').val());
-
+            let $form = $(this);
             // Get the input file
-            let $inputImages = $form.find('input[name^="images"]');
-            if (!$inputImages.length) {
-                $inputImages = $form.find('input[name^="photos"]')
-            }
+            $inputImages = $form.find('input[name^="photos"]')
 
             // Get the new files names
             let $fileNames = $('<ul>');
@@ -321,65 +354,50 @@
                 $('<li>', {text: file.name}).appendTo($fileNames);
             }
 
-            // Set the new files names
-            //$modal.find('#display-new-images').html($fileNames.html());
+            $.ajax({
+                url: "",
+                type: "POST",
+                data:  new FormData(this),
+                contentType: false,
+                cache: false,
+                processData:false,
+                beforeSend : function()
+                {
+                    $("#err").fadeOut();
+                },
+                success: function(data)
+                {
+                    data1 = jQuery.parseJSON(data);
 
-            // Get the preloaded inputs
-            let $inputPreloaded = $form.find('input[name^="old"]');
-            if ($inputPreloaded.length) {
+                    if(data1.message==='invalid')
+                    {
+                        $("#preview").css('display', 'none');
 
-                // Get the ids
-                let $preloadedIds = $('<ul>');
-                for (let iP of $inputPreloaded) {
-                    $('<li>', {text: '#' + iP.value}).appendTo($preloadedIds);
+                        error_str = '';
+                        $.each(data1.errors, function( index, value ) {
+                            //alert( index + ": " + value );
+                            error_str += '<li>'+value+'</li>';
+                        });
+                        $("#err").html('<ul>'+error_str+'</ul>').fadeIn();
+                    }
+                    else
+                    {
+                        $("#err").css('display', 'none');
+                        $("#preview").html(data1.message).fadeIn();
+
+                        setTimeout(function() {
+                            jQuery("#preview").hide('slow');
+                            location.reload();
+                        }, 2000);
+                    }
+                },
+                error: function(e)
+                {
+                    $("#err").html(e).fadeIn();
                 }
+            });
 
-                // Show the preloadede info and set the list of ids
-                //$modal.find('#display-preloaded-images').show().html($preloadedIds.html());
-
-            } else {
-
-                // Hide the preloaded info
-                //$modal.find('#display-preloaded-images').hide();
-
-            }
-
-            // Show the modal
-            //$modal.css('visibility', 'visible');
         });
-
-        // Input and label handler
-        $('input').on('focus', function () {
-            $(this).parent().find('label').addClass('active')
-        }).on('blur', function () {
-            if ($(this).val() == '') {
-                $(this).parent().find('label').removeClass('active');
-            }
-        });
-
-        // Sticky menu
-        let $nav = $('nav'),
-            $header = $('header'),
-            offset = 4 * parseFloat($('body').css('font-size')),
-            scrollTop = $(this).scrollTop();
-
-        // Initial verification
-        setNav();
-
-        // Bind scroll
-        $(window).on('scroll', function () {
-            scrollTop = $(this).scrollTop();
-            // Update nav
-            setNav();
-        });
-
-        function setNav() {
-            if (scrollTop > $header.outerHeight()) {
-                $nav.css({position: 'fixed', 'top': offset});
-            } else {
-                $nav.css({position: '', 'top': ''});
-            }
-        }
     });
 </script>
 
