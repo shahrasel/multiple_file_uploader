@@ -1,4 +1,5 @@
 ## Installation
+Please create a uploads folder in the root with "images" and "pdf" subfolders.
 Please import the database found in the folder name "database_file" and in the root folder "connection.php" file insert the connection data properly. File uploader will be shown in the root folder index.php file.
 
 
