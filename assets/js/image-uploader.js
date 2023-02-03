@@ -60,8 +60,7 @@
                         class: "uploaded-image"
                     }),
                     r = (e("<img>", {
-                        //src: (q!='application/pdf')?t:'sample.png'
-                        src: (q!='application/pdf')?t:'sample.png'
+                        src: (q!='application/pdf')?t:'assets/image/sample.png'
                     }).appendTo(l), e("<button>", {
                         class: "delete-image"
                     }).appendTo(l));

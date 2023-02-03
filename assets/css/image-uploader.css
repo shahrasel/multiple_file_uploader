@@ -1,12 +1,6 @@
 /*! Image Uploader - v1.2.3 - 26/11/2019 * Copyright (c) 2019 Christian Bayer;
  Licensed MIT */
-@font-face{
-    font-family:'Image Uploader Icons';
-    src:url(../fonts/iu.eot);
-    src:url(../fonts/iu.eot) format('embedded-opentype'),url(../fonts/iu.ttf) format('truetype'),url(../fonts/iu.woff) format('woff'),url(../fonts/iu.svg) format('svg');
-    font-weight:400;
-    font-style:normal
-}
+@font-face{font-family:'Image Uploader Icons';src:url(fonts/iu.eot);src:url(fonts/iu.eot) format('embedded-opentype'),url(fonts/iu.ttf) format('truetype'),url(fonts/iu.woff) format('woff'),url(fonts/iu.svg) format('svg');font-weight:400;font-style:normal}
 [class*=iui-],[class^=iui-]{
     font-family:'Image Uploader Icons'!important;
     speak:none;
