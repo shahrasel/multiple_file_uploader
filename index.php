@@ -1,8 +1,12 @@
 <?php
 require_once ("connection.php");
+require_once "vendor/autoload.php";
+require_once ("htmlPurifierConfig.php");
+
 const EXCEPTED_EXTENSION_TYPE = ["jpg", "jpeg", "png", "gif", "svg", "pdf"];
 const EXCEPTED_MIME_TYPE = ["image/jpeg", "image/png", "image/gif", "image/svg+xml", "application/pdf"];
 const EXCEPTED_SIZE = 5;
+
 
 if($_POST) {
     $error_messages = [];
@@ -46,7 +50,7 @@ if($_POST) {
 
                 $file = $filename;
                 $mime = $mime_type;
-                $comment = $_POST['comment_'.$i];
+                $comment = $purifier->purify($_POST['comment_'.$i]);
                 $stmt->execute();
             }
             $data['message'] = 'Files uploaded successfully';
@@ -78,7 +82,7 @@ if($_POST) {
         <form method="POST" name="form-example-2" id="form-example-2" enctype="multipart/form-data">
 
             <div class="input-field">
-                <label class="active">Photos</label>
+                <label class="active">Photos / PDF</label>
                 <div class="input-images-files" style="padding-top: .5rem;"></div>
             </div>
 
