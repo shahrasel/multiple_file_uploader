@@ -1,4 +1,9 @@
 ## Installation
+Please create a uploads folder (like next image) in the root with "images" and "pdf" subfolders.
+
+<img width="156" alt="Screenshot 2023-02-03 at 4 18 30 PM" src="https://user-images.githubusercontent.com/2698275/216639553-6290f89f-8abe-41ff-9e91-1d6e290b01c9.png">
+
+
 Please import the database found in the folder name "database_file" and in the root folder "connection.php" file insert the connection data properly. File uploader will be shown in the root folder index.php file.
 
 
