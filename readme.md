@@ -19,7 +19,7 @@ There is a sql file in the "database_file" folder. Import this into myslq and in
 
 ## Validation
 
-By dragging and dropping someone can put the file in the container of file uploader. If the files are not valid, validation errors will be showing by JS. By clicking submit, one can uplaod the files. After upload files are validated from the server and validation errors show accordingly. For XSS prevention "htmlpurifier" package is used. 
+By dragging and dropping someone can put the file in the container of file uploader. If the files are not valid, validation errors will be showing by JS. By clicking submit, one can uplaod the files. After upload files are validated from the server and validation errors show accordingly. For XSS prevention "htmlpurifier" package is used. To prevent cross site request forgery added CSRF token. 
 
 ## Data storage
 Image and PDF files are stored in the "Uploads" folder in the images and pdf folder. Image and pdf names with their mime type and comments are stored in the database, table name: files
