@@ -1,5 +1,6 @@
 {
   "require": {
-    "ezyang/htmlpurifier": "*"
+    "ezyang/htmlpurifier": "*",
+    "ext-fileinfo": "*"
   }
 }
